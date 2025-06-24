@@ -1,12 +1,13 @@
 import { nanoid } from 'nanoid'
 import express , { Request , Response } from 'express'
+import validator from 'validator';
 import dotenv from 'dotenv'
 
 
+const router = express.Router();
 dotenv.config();
-const app = express();
 const PORT = process.env.PORT;
-app.use(express.json())
+
 
 
 interface shortURL {
@@ -18,11 +19,15 @@ const shortenedURL : shortURL[] = []
 
 // LongURL into the shortenedURL
 
-app.post("/shorten", (req:Request, res:Response) =>{
+router.post("/api/v1/shorten", (req:Request, res:Response) =>{
     const {originalURL} = req.body;
 
     if (!originalURL){
         return res.status(400).json({error: "LongURL is required"});
+    }
+
+    if (!validator.isURL(originalURL)){
+        return res.status(400).json({error: "Invalid URL"})
     }
 
     const shortId = nanoid(6)
@@ -34,7 +39,7 @@ app.post("/shorten", (req:Request, res:Response) =>{
 
 // Redirect to OriginalURL
 
-app.get("/:shortId", (req: Request , res:Response) =>{
+router.get("/u/:shortId", (req: Request , res:Response) =>{
     const {shortId} = req.params;
     const originalURL = shortenedURL.find(url => url.id === shortId)
 
@@ -44,6 +49,4 @@ app.get("/:shortId", (req: Request , res:Response) =>{
     res.status(301).redirect(originalURL.originalURL)
 })
 
-app.listen(PORT, () => {
-    console.log(`Server Listing on Port : ${PORT}`)
-})
+export default router;
